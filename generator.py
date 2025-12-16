@@ -17,7 +17,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 # Config
 # -----------------------
 # MongoDB Configuration
-MONGO_URI = "mongodb://localhost:27017/"  # Change this to your MongoDB URI
+MONGO_URI = "mongodb://admin:wkrjk!20020415@localhost:27017/?authSource=admin"  # Change this to your MongoDB URI
 DATABASE_NAME = "address_db"
 COLLECTION_NAME = "addresses"
 FAILED_COLLECTION_NAME = "failed_requests"
