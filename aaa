@@ -1,0 +1,2 @@
+ssh -L 27017:localhost:27017 root@62.146.175.195
+mongosh -u admin -p --authenticationDatabase admin --host localhost --port 27017
