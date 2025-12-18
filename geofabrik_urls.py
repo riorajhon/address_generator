@@ -84,6 +84,7 @@ GEOFABRIK_URLS = {
 
     # Asia
     'AF': 'https://download.geofabrik.de/asia/afghanistan-latest.osm.pbf',
+    'AM': 'https://download.geofabrik.de/asia/armenia-latest.osm.pbf',
     'BD': 'https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf',
     'BT': 'https://download.geofabrik.de/asia/bhutan-latest.osm.pbf',
     'KH': 'https://download.geofabrik.de/asia/cambodia-latest.osm.pbf',

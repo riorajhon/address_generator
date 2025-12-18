@@ -1,0 +1,40 @@
+{
+  "AF": {
+    "geonameid": 1149361,
+    "name": "Afghanistan",
+    "iso": "AF",
+    "iso3": "AFG",
+    "isonumeric": 4,
+    "fips": "AF",
+    "continentcode": "AS",
+    "capital": "Kabul",
+    "areakm2": 647500,
+    "population": 37172386,
+    "tld": ".af",
+    "currencycode": "AFN",
+    "currencyname": "Afghani",
+    "phone": "93",
+    "postalcoderegex": "",
+    "languages": "fa-AF,ps,uz-AF,tk",
+    "neighbours": "TM,CN,IR,TJ,PK,UZ"
+  },
+  "AG": {
+    "geonameid": 3576396,
+    "name": "Antigua and Barbuda",
+    "iso": "AG",
+    "iso3": "ATG",
+    "isonumeric": 28,
+    "fips": "AC",
+    "continentcode": "NA",
+    "capital": "St. John's",
+    "areakm2": 443,
+    "population": 96286,
+    "tld": ".ag",
+    "currencycode": "XCD",
+    "currencyname": "Dollar",
+    "phone": "+1-268",
+    "postalcoderegex": "",
+    "languages": "en-AG",
+    "neighbours": ""
+  }
+}

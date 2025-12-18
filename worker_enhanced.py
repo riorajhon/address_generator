@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-OSM Address Extractor Worker
-Processes countries from geonames_countries.json in parallel across 50 workers
-Usage: python worker.py <worker_id>
+Enhanced OSM Address Extractor Worker
+- Downloads OSM files using geofabrik_urls.py
+- Saves missing countries to JSON file for manual download
+- Processes countries from geonames_countries.json in parallel across 50 workers
+Usage: python worker_enhanced.py <worker_id>
 """
 
 import json
@@ -18,16 +20,21 @@ from pymongo import MongoClient, ASCENDING
 from datetime import datetime
 import osmium
 from looks_like_address import looks_like_address
+from geofabrik_urls import get_geofabrik_url, GEOFABRIK_URLS
 
 # Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:wkrjk!20020415@localhost:27017/?authSource=admin")
 DB_NAME = "address_db"
 COUNTRIES_FILE = "geonames_countries.json"
 WORK_DIR = Path("./osm_data")
+MISSING_COUNTRIES_FILE = "missing_countries.json"
 MAX_BBOX_AREA = 100  # m^2
 
 # Global flag for graceful shutdown
 shutdown_requested = False
+
+# Global list to track missing countries
+missing_countries = []
 
 class AddressExtractor(osmium.SimpleHandler):
     """Extract buildings with full addresses from OSM PBF"""
@@ -336,7 +343,7 @@ class AddressExtractor(osmium.SimpleHandler):
             self.addresses_batch.clear()
             print(f"[Worker {self.worker.worker_id}] Saved batch, total: {self.total_saved} addresses for {self.country_code}")
 
-class AddressWorker:
+class EnhancedAddressWorker:
     def __init__(self, worker_id: int):
         self.worker_id = worker_id
         self.client = MongoClient(MONGO_URI)
@@ -360,28 +367,40 @@ class AddressWorker:
         self.country_status_col.create_index([("country_code", ASCENDING)], unique=True)
     
     def claim_country(self) -> Optional[str]:
-        """Claim next available country for processing"""
+        """Claim next available country for processing - atomic operation to prevent race conditions"""
         with open(COUNTRIES_FILE, 'r', encoding='utf-8') as f:
             countries = json.load(f)
         
         for country_code in countries.keys():
-            # Try to atomically claim this country
-            result = self.country_status_col.find_one_and_update(
-                {"country_code": country_code},
-                {
-                    "$setOnInsert": {
-                        "country_code": country_code,
-                        "worker_id": self.worker_id,
-                        "status": "processing",
-                        "started_at": datetime.utcnow()
-                    }
-                },
-                upsert=True
-            )
-            
-            # If result is None, we successfully claimed this country
-            if result is None:
-                return country_code
+            try:
+                # First, try to insert a new document (for unclaimed countries)
+                result = self.country_status_col.update_one(
+                    {"country_code": country_code},
+                    {
+                        "$setOnInsert": {
+                            "country_code": country_code,
+                            "worker_id": self.worker_id,
+                            "status": "processing",
+                            "started_at": datetime.utcnow()
+                        }
+                    },
+                    upsert=True
+                )
+                
+                # If we inserted a new document, we successfully claimed it
+                if result.upserted_id is not None:
+                    print(f"[Worker {self.worker_id}] Claimed country: {country_code}")
+                    return country_code
+                
+                # If document already exists, check if it's available
+                existing = self.country_status_col.find_one({"country_code": country_code})
+                if existing and existing.get("status") in ["completed", "skipped", "processing"]:
+                    # Already processed, skipped, or being processed by another worker
+                    continue
+                
+            except Exception as e:
+                # Duplicate key or other error, try next country
+                continue
         
         return None
     
@@ -451,8 +470,8 @@ class AddressWorker:
             gc.collect()  # Force garbage collection to release file handles
     
     def download_pbf(self, country_code: str, country_name: str) -> Optional[Path]:
-        """Download OSM PBF file for country"""
-        from geofabrik_urls import get_geofabrik_url
+        """Download OSM PBF file for country using geofabrik_urls.py"""
+        global missing_countries
         
         pbf_file = WORK_DIR / f"{country_code.lower()}-latest.osm.pbf"
         
@@ -465,7 +484,19 @@ class AddressWorker:
                 print(f"[Worker {self.worker_id}] Existing PBF file is corrupted, re-downloading...")
                 self.safe_remove_file(pbf_file)
         
-        # Get correct Geofabrik URL for this country
+        # Check if URL exists in geofabrik_urls.py
+        if country_code.upper() not in GEOFABRIK_URLS:
+            print(f"[Worker {self.worker_id}] No Geofabrik URL found for {country_code} ({country_name})")
+            # Check if already in missing countries to avoid duplicates
+            if not any(c['country_code'] == country_code for c in missing_countries):
+                missing_countries.append({
+                    "country_code": country_code,
+                    "country_name": country_name,
+                    "reason": "no_geofabrik_url"
+                })
+            return None
+        
+        # Get the correct Geofabrik URL
         primary_url = get_geofabrik_url(country_code, country_name)
         
         # Try primary URL first, then fallbacks
@@ -500,6 +531,16 @@ class AddressWorker:
                 self.safe_remove_file(pbf_file)
                 continue
         
+        # If all downloads failed, add to missing countries
+        print(f"[Worker {self.worker_id}] All download attempts failed for {country_code} ({country_name})")
+        # Check if already in missing countries to avoid duplicates
+        if not any(c['country_code'] == country_code for c in missing_countries):
+            missing_countries.append({
+                "country_code": country_code,
+                "country_name": country_name,
+                "reason": "download_failed",
+                "attempted_urls": urls
+            })
         return None
     
     def save_addresses_batch(self, country_code: str, country_name: str, addresses: List[Dict]):
@@ -556,16 +597,22 @@ class AddressWorker:
         if self.current_pbf_file and self.current_pbf_file.exists():
             print(f"[Worker {self.worker_id}] Keeping PBF file: {self.current_pbf_file}")
         
-        # Cleanup only temporary files (not original PBF files)
-        if WORK_DIR.exists():
-            for temp_file in WORK_DIR.glob("*.filtered.osm.pbf"):
-                temp_file.unlink(missing_ok=True)
-            for temp_file in WORK_DIR.glob("*.json"):
-                temp_file.unlink(missing_ok=True)
-        
         # Close MongoDB connection
         self.client.close()
         print(f"[Worker {self.worker_id}] Cleanup complete")
+    
+    def mark_skipped(self, country_code: str, reason: str):
+        """Mark country as skipped (no download available)"""
+        self.country_status_col.update_one(
+            {"country_code": country_code},
+            {
+                "$set": {
+                    "status": "skipped",
+                    "reason": reason,
+                    "skipped_at": datetime.utcnow()
+                }
+            }
+        )
     
     def process_country(self, country_code: str, country_data: Dict):
         """Process a single country"""
@@ -582,8 +629,9 @@ class AddressWorker:
             
             pbf_file = self.download_pbf(country_code, country_name)
             if not pbf_file:
-                print(f"[Worker {self.worker_id}] Failed to download PBF for {country_code}")
-                self.release_country(country_code)
+                print(f"[Worker {self.worker_id}] Skipping {country_code} - no download available")
+                self.mark_skipped(country_code, "no_download_available")
+                self.current_country = None
                 return
             
             self.current_pbf_file = pbf_file
@@ -642,6 +690,31 @@ class AddressWorker:
             country_data = countries[country_code]
             self.process_country(country_code, country_data)
 
+def save_missing_countries():
+    """Save missing countries to JSON file"""
+    global missing_countries
+    
+    if missing_countries:
+        print(f"\n=== MISSING COUNTRIES SUMMARY ===")
+        print(f"Found {len(missing_countries)} countries that need manual download:")
+        
+        for country in missing_countries:
+            print(f"  {country['country_code']} - {country['country_name']} ({country['reason']})")
+        
+        # Save to JSON file
+        with open(MISSING_COUNTRIES_FILE, 'w', encoding='utf-8') as f:
+            json.dump({
+                "missing_countries": missing_countries,
+                "total_count": len(missing_countries),
+                "generated_at": datetime.utcnow().isoformat()
+            }, f, indent=2, ensure_ascii=False)
+        
+        print(f"\nMissing countries saved to: {MISSING_COUNTRIES_FILE}")
+        print("You can manually download these countries and place them in osm_manual/ folder")
+    else:
+        print("\n=== ALL COUNTRIES PROCESSED ===")
+        print("No missing countries found!")
+
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully"""
     global shutdown_requested
@@ -652,7 +725,7 @@ def main():
     global shutdown_requested
     
     if len(sys.argv) != 2:
-        print("Usage: python worker.py <worker_id>")
+        print("Usage: python worker_enhanced.py <worker_id>")
         sys.exit(1)
     
     # Register signal handlers
@@ -660,7 +733,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)  # kill command
     
     worker_id = int(sys.argv[1])
-    worker = AddressWorker(worker_id)
+    worker = EnhancedAddressWorker(worker_id)
     
     try:
         worker.run()
@@ -668,6 +741,7 @@ def main():
         print(f"\n[Worker {worker_id}] Interrupted by user")
     finally:
         worker.cleanup()
+        save_missing_countries()  # Save missing countries on exit
         print(f"[Worker {worker_id}] Shutdown complete")
 
 if __name__ == "__main__":
