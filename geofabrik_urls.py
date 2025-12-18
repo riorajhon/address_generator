@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""
+Geofabrik URL mapping for OSM PBF files
+Maps country codes to correct Geofabrik download URLs
+"""
+
+# Complete Geofabrik URL mapping based on official structure
+GEOFABRIK_URLS = {
+    # Europe
+    'AL': 'https://download.geofabrik.de/europe/albania-latest.osm.pbf',
+    'AD': 'https://download.geofabrik.de/europe/andorra-latest.osm.pbf',
+    'AT': 'https://download.geofabrik.de/europe/austria-latest.osm.pbf',
+    'BY': 'https://download.geofabrik.de/europe/belarus-latest.osm.pbf',
+    'BE': 'https://download.geofabrik.de/europe/belgium-latest.osm.pbf',
+    'BA': 'https://download.geofabrik.de/europe/bosnia-herzegovina-latest.osm.pbf',
+    'BG': 'https://download.geofabrik.de/europe/bulgaria-latest.osm.pbf',
+    'HR': 'https://download.geofabrik.de/europe/croatia-latest.osm.pbf',
+    'CY': 'https://download.geofabrik.de/europe/cyprus-latest.osm.pbf',
+    'CZ': 'https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf',
+    'DK': 'https://download.geofabrik.de/europe/denmark-latest.osm.pbf',
+    'EE': 'https://download.geofabrik.de/europe/estonia-latest.osm.pbf',
+    'FO': 'https://download.geofabrik.de/europe/faroe-islands-latest.osm.pbf',
+    'FI': 'https://download.geofabrik.de/europe/finland-latest.osm.pbf',
+    'FR': 'https://download.geofabrik.de/europe/france-latest.osm.pbf',
+    'DE': 'https://download.geofabrik.de/europe/germany-latest.osm.pbf',
+    'GR': 'https://download.geofabrik.de/europe/greece-latest.osm.pbf',
+    'HU': 'https://download.geofabrik.de/europe/hungary-latest.osm.pbf',
+    'IS': 'https://download.geofabrik.de/europe/iceland-latest.osm.pbf',
+    'IE': 'https://download.geofabrik.de/europe/ireland-and-northern-ireland-latest.osm.pbf',
+    'IM': 'https://download.geofabrik.de/europe/isle-of-man-latest.osm.pbf',
+    'IT': 'https://download.geofabrik.de/europe/italy-latest.osm.pbf',
+    'XK': 'https://download.geofabrik.de/europe/kosovo-latest.osm.pbf',
+    'LV': 'https://download.geofabrik.de/europe/latvia-latest.osm.pbf',
+    'LI': 'https://download.geofabrik.de/europe/liechtenstein-latest.osm.pbf',
+    'LT': 'https://download.geofabrik.de/europe/lithuania-latest.osm.pbf',
+    'LU': 'https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf',
+    'MK': 'https://download.geofabrik.de/europe/macedonia-latest.osm.pbf',
+    'MT': 'https://download.geofabrik.de/europe/malta-latest.osm.pbf',
+    'MD': 'https://download.geofabrik.de/europe/moldova-latest.osm.pbf',
+    'MC': 'https://download.geofabrik.de/europe/monaco-latest.osm.pbf',
+    'ME': 'https://download.geofabrik.de/europe/montenegro-latest.osm.pbf',
+    'NL': 'https://download.geofabrik.de/europe/netherlands-latest.osm.pbf',
+    'NO': 'https://download.geofabrik.de/europe/norway-latest.osm.pbf',
+    'PL': 'https://download.geofabrik.de/europe/poland-latest.osm.pbf',
+    'PT': 'https://download.geofabrik.de/europe/portugal-latest.osm.pbf',
+    'RO': 'https://download.geofabrik.de/europe/romania-latest.osm.pbf',
+    'RU': 'https://download.geofabrik.de/russia-latest.osm.pbf',
+    'SM': 'https://download.geofabrik.de/europe/san-marino-latest.osm.pbf',
+    'RS': 'https://download.geofabrik.de/europe/serbia-latest.osm.pbf',
+    'SK': 'https://download.geofabrik.de/europe/slovakia-latest.osm.pbf',
+    'SI': 'https://download.geofabrik.de/europe/slovenia-latest.osm.pbf',
+    'ES': 'https://download.geofabrik.de/europe/spain-latest.osm.pbf',
+    'SE': 'https://download.geofabrik.de/europe/sweden-latest.osm.pbf',
+    'CH': 'https://download.geofabrik.de/europe/switzerland-latest.osm.pbf',
+    'UA': 'https://download.geofabrik.de/europe/ukraine-latest.osm.pbf',
+    'GB': 'https://download.geofabrik.de/europe/great-britain-latest.osm.pbf',
+    'VA': 'https://download.geofabrik.de/europe/vatican-city-latest.osm.pbf',
+
+    # North America
+    'US': 'https://download.geofabrik.de/north-america/us-latest.osm.pbf',
+    'CA': 'https://download.geofabrik.de/north-america/canada-latest.osm.pbf',
+    'MX': 'https://download.geofabrik.de/north-america/mexico-latest.osm.pbf',
+    'GT': 'https://download.geofabrik.de/central-america/guatemala-latest.osm.pbf',
+    'BZ': 'https://download.geofabrik.de/central-america/belize-latest.osm.pbf',
+    'SV': 'https://download.geofabrik.de/central-america/el-salvador-latest.osm.pbf',
+    'HN': 'https://download.geofabrik.de/central-america/honduras-latest.osm.pbf',
+    'NI': 'https://download.geofabrik.de/central-america/nicaragua-latest.osm.pbf',
+    'CR': 'https://download.geofabrik.de/central-america/costa-rica-latest.osm.pbf',
+    'PA': 'https://download.geofabrik.de/central-america/panama-latest.osm.pbf',
+
+    # South America
+    'AR': 'https://download.geofabrik.de/south-america/argentina-latest.osm.pbf',
+    'BO': 'https://download.geofabrik.de/south-america/bolivia-latest.osm.pbf',
+    'BR': 'https://download.geofabrik.de/south-america/brazil-latest.osm.pbf',
+    'CL': 'https://download.geofabrik.de/south-america/chile-latest.osm.pbf',
+    'CO': 'https://download.geofabrik.de/south-america/colombia-latest.osm.pbf',
+    'EC': 'https://download.geofabrik.de/south-america/ecuador-latest.osm.pbf',
+    'GY': 'https://download.geofabrik.de/south-america/guyana-latest.osm.pbf',
+    'PY': 'https://download.geofabrik.de/south-america/paraguay-latest.osm.pbf',
+    'PE': 'https://download.geofabrik.de/south-america/peru-latest.osm.pbf',
+    'SR': 'https://download.geofabrik.de/south-america/suriname-latest.osm.pbf',
+    'UY': 'https://download.geofabrik.de/south-america/uruguay-latest.osm.pbf',
+    'VE': 'https://download.geofabrik.de/south-america/venezuela-latest.osm.pbf',
+
+    # Asia
+    'AF': 'https://download.geofabrik.de/asia/afghanistan-latest.osm.pbf',
+    'BD': 'https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf',
+    'BT': 'https://download.geofabrik.de/asia/bhutan-latest.osm.pbf',
+    'KH': 'https://download.geofabrik.de/asia/cambodia-latest.osm.pbf',
+    'CN': 'https://download.geofabrik.de/asia/china-latest.osm.pbf',
+    'IN': 'https://download.geofabrik.de/asia/india-latest.osm.pbf',
+    'ID': 'https://download.geofabrik.de/asia/indonesia-latest.osm.pbf',
+    'IR': 'https://download.geofabrik.de/asia/iran-latest.osm.pbf',
+    'IQ': 'https://download.geofabrik.de/asia/iraq-latest.osm.pbf',
+    'IL': 'https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf',
+    'PS': 'https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf',
+    'JP': 'https://download.geofabrik.de/asia/japan-latest.osm.pbf',
+    'JO': 'https://download.geofabrik.de/asia/jordan-latest.osm.pbf',
+    'KZ': 'https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf',
+    'KG': 'https://download.geofabrik.de/asia/kyrgyzstan-latest.osm.pbf',
+    'LA': 'https://download.geofabrik.de/asia/laos-latest.osm.pbf',
+    'LB': 'https://download.geofabrik.de/asia/lebanon-latest.osm.pbf',
+    'MY': 'https://download.geofabrik.de/asia/malaysia-latest.osm.pbf',
+    'MV': 'https://download.geofabrik.de/asia/maldives-latest.osm.pbf',
+    'MN': 'https://download.geofabrik.de/asia/mongolia-latest.osm.pbf',
+    'MM': 'https://download.geofabrik.de/asia/myanmar-latest.osm.pbf',
+    'NP': 'https://download.geofabrik.de/asia/nepal-latest.osm.pbf',
+    'KP': 'https://download.geofabrik.de/asia/north-korea-latest.osm.pbf',
+    'PK': 'https://download.geofabrik.de/asia/pakistan-latest.osm.pbf',
+    'PH': 'https://download.geofabrik.de/asia/philippines-latest.osm.pbf',
+    'SG': 'https://download.geofabrik.de/asia/singapore-latest.osm.pbf',
+    'KR': 'https://download.geofabrik.de/asia/south-korea-latest.osm.pbf',
+    'LK': 'https://download.geofabrik.de/asia/sri-lanka-latest.osm.pbf',
+    'SY': 'https://download.geofabrik.de/asia/syria-latest.osm.pbf',
+    'TW': 'https://download.geofabrik.de/asia/taiwan-latest.osm.pbf',
+    'TJ': 'https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf',
+    'TH': 'https://download.geofabrik.de/asia/thailand-latest.osm.pbf',
+    'TL': 'https://download.geofabrik.de/asia/east-timor-latest.osm.pbf',
+    'TR': 'https://download.geofabrik.de/asia/turkey-latest.osm.pbf',
+    'TM': 'https://download.geofabrik.de/asia/turkmenistan-latest.osm.pbf',
+    'UZ': 'https://download.geofabrik.de/asia/uzbekistan-latest.osm.pbf',
+    'VN': 'https://download.geofabrik.de/asia/vietnam-latest.osm.pbf',
+    'YE': 'https://download.geofabrik.de/asia/yemen-latest.osm.pbf',
+
+    # Africa
+    'DZ': 'https://download.geofabrik.de/africa/algeria-latest.osm.pbf',
+    'AO': 'https://download.geofabrik.de/africa/angola-latest.osm.pbf',
+    'BJ': 'https://download.geofabrik.de/africa/benin-latest.osm.pbf',
+    'BW': 'https://download.geofabrik.de/africa/botswana-latest.osm.pbf',
+    'BF': 'https://download.geofabrik.de/africa/burkina-faso-latest.osm.pbf',
+    'BI': 'https://download.geofabrik.de/africa/burundi-latest.osm.pbf',
+    'CM': 'https://download.geofabrik.de/africa/cameroon-latest.osm.pbf',
+    'CV': 'https://download.geofabrik.de/africa/cape-verde-latest.osm.pbf',
+    'CF': 'https://download.geofabrik.de/africa/central-african-republic-latest.osm.pbf',
+    'TD': 'https://download.geofabrik.de/africa/chad-latest.osm.pbf',
+    'KM': 'https://download.geofabrik.de/africa/comores-latest.osm.pbf',
+    'CG': 'https://download.geofabrik.de/africa/congo-brazzaville-latest.osm.pbf',
+    'CD': 'https://download.geofabrik.de/africa/congo-democratic-republic-latest.osm.pbf',
+    'CI': 'https://download.geofabrik.de/africa/ivory-coast-latest.osm.pbf',
+    'DJ': 'https://download.geofabrik.de/africa/djibouti-latest.osm.pbf',
+    'EG': 'https://download.geofabrik.de/africa/egypt-latest.osm.pbf',
+    'GQ': 'https://download.geofabrik.de/africa/equatorial-guinea-latest.osm.pbf',
+    'ER': 'https://download.geofabrik.de/africa/eritrea-latest.osm.pbf',
+    'ET': 'https://download.geofabrik.de/africa/ethiopia-latest.osm.pbf',
+    'GA': 'https://download.geofabrik.de/africa/gabon-latest.osm.pbf',
+    'GM': 'https://download.geofabrik.de/africa/gambia-latest.osm.pbf',
+    'GH': 'https://download.geofabrik.de/africa/ghana-latest.osm.pbf',
+    'GN': 'https://download.geofabrik.de/africa/guinea-latest.osm.pbf',
+    'GW': 'https://download.geofabrik.de/africa/guinea-bissau-latest.osm.pbf',
+    'KE': 'https://download.geofabrik.de/africa/kenya-latest.osm.pbf',
+    'LS': 'https://download.geofabrik.de/africa/lesotho-latest.osm.pbf',
+    'LR': 'https://download.geofabrik.de/africa/liberia-latest.osm.pbf',
+    'LY': 'https://download.geofabrik.de/africa/libya-latest.osm.pbf',
+    'MG': 'https://download.geofabrik.de/africa/madagascar-latest.osm.pbf',
+    'MW': 'https://download.geofabrik.de/africa/malawi-latest.osm.pbf',
+    'ML': 'https://download.geofabrik.de/africa/mali-latest.osm.pbf',
+    'MR': 'https://download.geofabrik.de/africa/mauritania-latest.osm.pbf',
+    'MU': 'https://download.geofabrik.de/africa/mauritius-latest.osm.pbf',
+    'MA': 'https://download.geofabrik.de/africa/morocco-latest.osm.pbf',
+    'MZ': 'https://download.geofabrik.de/africa/mozambique-latest.osm.pbf',
+    'NA': 'https://download.geofabrik.de/africa/namibia-latest.osm.pbf',
+    'NE': 'https://download.geofabrik.de/africa/niger-latest.osm.pbf',
+    'NG': 'https://download.geofabrik.de/africa/nigeria-latest.osm.pbf',
+    'RW': 'https://download.geofabrik.de/africa/rwanda-latest.osm.pbf',
+    'ST': 'https://download.geofabrik.de/africa/sao-tome-and-principe-latest.osm.pbf',
+    'SN': 'https://download.geofabrik.de/africa/senegal-latest.osm.pbf',
+    'SC': 'https://download.geofabrik.de/africa/seychelles-latest.osm.pbf',
+    'SL': 'https://download.geofabrik.de/africa/sierra-leone-latest.osm.pbf',
+    'SO': 'https://download.geofabrik.de/africa/somalia-latest.osm.pbf',
+    'ZA': 'https://download.geofabrik.de/africa/south-africa-latest.osm.pbf',
+    'SS': 'https://download.geofabrik.de/africa/south-sudan-latest.osm.pbf',
+    'SD': 'https://download.geofabrik.de/africa/sudan-latest.osm.pbf',
+    'SZ': 'https://download.geofabrik.de/africa/swaziland-latest.osm.pbf',
+    'TZ': 'https://download.geofabrik.de/africa/tanzania-latest.osm.pbf',
+    'TG': 'https://download.geofabrik.de/africa/togo-latest.osm.pbf',
+    'TN': 'https://download.geofabrik.de/africa/tunisia-latest.osm.pbf',
+    'UG': 'https://download.geofabrik.de/africa/uganda-latest.osm.pbf',
+    'ZM': 'https://download.geofabrik.de/africa/zambia-latest.osm.pbf',
+    'ZW': 'https://download.geofabrik.de/africa/zimbabwe-latest.osm.pbf',
+
+    # Oceania
+    'AU': 'https://download.geofabrik.de/australia-oceania/australia-latest.osm.pbf',
+    'FJ': 'https://download.geofabrik.de/australia-oceania/fiji-latest.osm.pbf',
+    'NZ': 'https://download.geofabrik.de/australia-oceania/new-zealand-latest.osm.pbf',
+    'PG': 'https://download.geofabrik.de/australia-oceania/papua-new-guinea-latest.osm.pbf',
+
+    # GCC States (shared file)
+    'SA': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+    'AE': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+    'QA': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+    'KW': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+    'BH': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+    'OM': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+}
+
+def get_geofabrik_url(country_code: str, country_name: str) -> str:
+    """Get the correct Geofabrik URL for a country"""
+    country_code = country_code.upper()
+    
+    # Check if we have a specific mapping
+    if country_code in GEOFABRIK_URLS:
+        return GEOFABRIK_URLS[country_code]
+    
+    # Fallback: try to construct URL from country name
+    country_slug = country_name.lower().replace(' ', '-').replace('&', 'and')
+    return f"https://download.geofabrik.de/{country_slug}-latest.osm.pbf"
+
+if __name__ == "__main__":
+    # Test some mappings
+    test_countries = [
+        ('MC', 'Monaco'),
+        ('AD', 'Andorra'), 
+        ('US', 'United States'),
+        ('DE', 'Germany'),
+        ('CN', 'China')
+    ]
+    
+    for code, name in test_countries:
+        url = get_geofabrik_url(code, name)
+        print(f"{code} ({name}): {url}")
