@@ -22,6 +22,14 @@ import osmium
 from looks_like_address import looks_like_address
 from geofabrik_urls import get_geofabrik_url, GEOFABRIK_URLS
 
+# Optional memory monitoring
+try:
+    import psutil
+    MEMORY_MONITORING = True
+except ImportError:
+    MEMORY_MONITORING = False
+    print("Warning: psutil not installed. Memory monitoring disabled.")
+
 # Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:wkrjk!20020415@localhost:27017/?authSource=admin")
 DB_NAME = "address_db"
@@ -614,8 +622,33 @@ class EnhancedAddressWorker:
             }
         )
     
+    def check_file_size(self, pbf_file: Path) -> bool:
+        """Check if PBF file is too large for available memory"""
+        try:
+            import psutil
+            file_size = pbf_file.stat().st_size
+            available_memory = psutil.virtual_memory().available
+            
+            # Rule of thumb: PBF processing needs 3-5x file size in RAM
+            estimated_memory_needed = file_size * 4
+            
+            if estimated_memory_needed > available_memory:
+                size_mb = file_size / (1024 * 1024)
+                mem_mb = available_memory / (1024 * 1024)
+                print(f"[Worker {self.worker_id}] File too large: {size_mb:.1f}MB, available memory: {mem_mb:.1f}MB")
+                return False
+            return True
+        except ImportError:
+            # If psutil not available, check basic file size limits
+            file_size = pbf_file.stat().st_size
+            # Skip files larger than 500MB if we can't check memory
+            if file_size > 500 * 1024 * 1024:
+                print(f"[Worker {self.worker_id}] File too large: {file_size / (1024 * 1024):.1f}MB (no memory check available)")
+                return False
+            return True
+
     def process_country(self, country_code: str, country_data: Dict):
-        """Process a single country"""
+        """Process a single country with memory management"""
         global shutdown_requested
         
         country_name = country_data['name']
@@ -634,6 +667,13 @@ class EnhancedAddressWorker:
                 self.current_country = None
                 return
             
+            # Step 1.5: Check if file is too large for available memory
+            if not self.check_file_size(pbf_file):
+                print(f"[Worker {self.worker_id}] Skipping {country_code} - file too large for available memory")
+                self.mark_skipped(country_code, "file_too_large")
+                self.current_country = None
+                return
+            
             self.current_pbf_file = pbf_file
             
             # Step 2: Extract addresses using osmium
@@ -644,6 +684,9 @@ class EnhancedAddressWorker:
             handler = AddressExtractor(self, country_name, country_code, MAX_BBOX_AREA)
             
             try:
+                # Force garbage collection before processing
+                gc.collect()
+                
                 handler.apply_file(str(pbf_file), locations=True)
                 
                 # Save remaining addresses in final batch
@@ -654,13 +697,25 @@ class EnhancedAddressWorker:
                 print(f"[Worker {self.worker_id}] Saved {handler.total_saved} addresses for {country_code}")
                 
             except Exception as e:
-                print(f"[Worker {self.worker_id}] Error processing PBF: {e}")
-                # If PBF processing fails, delete the corrupted file
-                if pbf_file.exists():
-                    print(f"[Worker {self.worker_id}] Deleting corrupted PBF file: {pbf_file}")
-                    self.safe_remove_file(pbf_file)
-                self.release_country(country_code)
+                error_msg = str(e)
+                print(f"[Worker {self.worker_id}] Error processing PBF: {error_msg}")
+                
+                # Check if it's a memory error
+                if "bad_alloc" in error_msg or "memory" in error_msg.lower():
+                    print(f"[Worker {self.worker_id}] Memory error - file too large for system")
+                    self.mark_skipped(country_code, "memory_error")
+                else:
+                    # If PBF processing fails for other reasons, delete the corrupted file
+                    if pbf_file.exists():
+                        print(f"[Worker {self.worker_id}] Deleting corrupted PBF file: {pbf_file}")
+                        self.safe_remove_file(pbf_file)
+                    self.release_country(country_code)
                 return
+            finally:
+                # Clean up handler and force garbage collection
+                if 'handler' in locals():
+                    del handler
+                gc.collect()
             
             # Step 3: Mark complete
             self.mark_complete(country_code)
