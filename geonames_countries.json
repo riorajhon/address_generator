@@ -3628,6 +3628,25 @@
     "languages": "sr,hu,bs,rom",
     "neighbours": "AL,HU,MK,RO,HR,BA,BG,ME,XK"
   },
+  "RU": {
+    "geonameid": 2017370,
+    "name": "Russia",
+    "iso": "RU",
+    "iso3": "RUS",
+    "isonumeric": 643,
+    "fips": "RS",
+    "continentcode": "EU",
+    "capital": "Moscow",
+    "areakm2": 17100000,
+    "population": 144478050,
+    "tld": ".ru",
+    "currencycode": "RUB",
+    "currencyname": "Ruble",
+    "phone": "7",
+    "postalcoderegex": "^(\\d{6})$",
+    "languages": "ru,tt,xal,cau,ady,kv,ce,tyv,cv,udm,tut,mns,bua,myv,mdf,chm,ba,inh,kbd,krc,av,sah,nog",
+    "neighbours": "GE,CN,BY,UA,KZ,LV,PL,EE,LT,FI,MN,NO,AZ,KP"
+  },
   "RW": {
     "geonameid": 49518,
     "name": "Rwanda",

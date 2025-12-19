@@ -398,7 +398,6 @@ class EnhancedAddressWorker:
                     {
                         "$setOnInsert": {
                             "country_code": country_code,
-                            ###insert country name
                             "worker_id": self.worker_id,
                             "status": "processing",
                             "started_at": datetime.utcnow()
@@ -414,10 +413,14 @@ class EnhancedAddressWorker:
                 
                 # If document already exists, check if it's available
                 existing = self.country_status_col.find_one({"country_code": country_code})
-                if existing and existing.get("status") in ["completed", "skipped", "processing"]:
-                    # Already processed, skipped, or being processed by another worker
-                    continue
-                
+                if existing:
+                    status = existing.get("status")
+                    if status == "retry":
+                        # Country marked for retry - claim it
+                        return country_code
+                    elif status in ["completed", "skipped", "processing"]:
+                        # Already processed, skipped, or being processed by another worker
+                        continue
             except Exception as e:
                 # Duplicate key or other error, try next country
                 continue
