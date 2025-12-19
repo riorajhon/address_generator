@@ -192,6 +192,8 @@ GEOFABRIK_URLS = {
     'KW': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
     'BH': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
     'OM': 'https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf',
+    
+    #inserted
 }
 
 def get_geofabrik_url(country_code: str, country_name: str) -> str:

@@ -1,4 +1,42 @@
 {
+  "AD": {
+    "geonameid": 3041565,
+    "name": "Andorra",
+    "iso": "AD",
+    "iso3": "AND",
+    "isonumeric": 20,
+    "fips": "AN",
+    "continentcode": "EU",
+    "capital": "Andorra la Vella",
+    "areakm2": 468,
+    "population": 77006,
+    "tld": ".ad",
+    "currencycode": "EUR",
+    "currencyname": "Euro",
+    "phone": "376",
+    "postalcoderegex": "^(?:AD)*(\\d{3})$",
+    "languages": "ca",
+    "neighbours": "ES,FR"
+  },
+  "AE": {
+    "geonameid": 290557,
+    "name": "United Arab Emirates",
+    "iso": "AE",
+    "iso3": "ARE",
+    "isonumeric": 784,
+    "fips": "AE",
+    "continentcode": "AS",
+    "capital": "Abu Dhabi",
+    "areakm2": 82880,
+    "population": 9630959,
+    "tld": ".ae",
+    "currencycode": "AED",
+    "currencyname": "Dirham",
+    "phone": "971",
+    "postalcoderegex": "^\\d{5}-\\d{5}$",
+    "languages": "ar-AE,fa,en,hi,ur",
+    "neighbours": "SA,OM"
+  },
   "AF": {
     "geonameid": 1149361,
     "name": "Afghanistan",
@@ -626,7 +664,25 @@
     "languages": "en-BW,tn-BW",
     "neighbours": "ZW,ZA,NA"
   },
-  
+  "BY": {
+    "geonameid": 630336,
+    "name": "Belarus",
+    "iso": "BY",
+    "iso3": "BLR",
+    "isonumeric": 112,
+    "fips": "BO",
+    "continentcode": "EU",
+    "capital": "Minsk",
+    "areakm2": 207600,
+    "population": 9485386,
+    "tld": ".by",
+    "currencycode": "BYN",
+    "currencyname": "Belarusian ruble",
+    "phone": "375",
+    "postalcoderegex": "^(\\d{6})$",
+    "languages": "be,ru",
+    "neighbours": "PL,LT,UA,RU,LV"
+  },
   "BZ": {
     "geonameid": 3582678,
     "name": "Belize",
@@ -1178,7 +1234,25 @@
     "languages": "ar-EG,en,fr",
     "neighbours": "LY,SD,IL,PS"
   },
-  
+  "EH": {
+    "geonameid": 2461445,
+    "name": "Western Sahara",
+    "iso": "EH",
+    "iso3": "ESH",
+    "isonumeric": 732,
+    "fips": "WI",
+    "continentcode": "AF",
+    "capital": "El-Aaiun",
+    "areakm2": 266000,
+    "population": 273008,
+    "tld": ".eh",
+    "currencycode": "MAD",
+    "currencyname": "Dirham",
+    "phone": "212",
+    "postalcoderegex": "",
+    "languages": "ar,mey",
+    "neighbours": "DZ,MR,MA"
+  },
   "ER": {
     "geonameid": 338010,
     "name": "Eritrea",
@@ -3117,6 +3191,25 @@
     "languages": "no,nb,nn,se,fi",
     "neighbours": "FI,RU,SE"
   },
+  "NP": {
+    "geonameid": 1282988,
+    "name": "Nepal",
+    "iso": "NP",
+    "iso3": "NPL",
+    "isonumeric": 524,
+    "fips": "NP",
+    "continentcode": "AS",
+    "capital": "Kathmandu",
+    "areakm2": 140800,
+    "population": 28087871,
+    "tld": ".np",
+    "currencycode": "NPR",
+    "currencyname": "Rupee",
+    "phone": "977",
+    "postalcoderegex": "^(\\d{5})$",
+    "languages": "ne,en",
+    "neighbours": "CN,IN"
+  },
   "NR": {
     "geonameid": 2110425,
     "name": "Nauru",
@@ -3478,7 +3571,25 @@
     "languages": "ar-QA,es",
     "neighbours": "SA"
   },
-  
+  "RE": {
+    "geonameid": 935317,
+    "name": "Reunion",
+    "iso": "RE",
+    "iso3": "REU",
+    "isonumeric": 638,
+    "fips": "RE",
+    "continentcode": "AF",
+    "capital": "Saint-Denis",
+    "areakm2": 2517,
+    "population": 776948,
+    "tld": ".re",
+    "currencycode": "EUR",
+    "currencyname": "Euro",
+    "phone": "262",
+    "postalcoderegex": "^((97|98)(4|7|8)\\d{2})$",
+    "languages": "fr-RE",
+    "neighbours": ""
+  },
   "RO": {
     "geonameid": 798549,
     "name": "Romania",
@@ -3517,7 +3628,6 @@
     "languages": "sr,hu,bs,rom",
     "neighbours": "AL,HU,MK,RO,HR,BA,BG,ME,XK"
   },
-  
   "RW": {
     "geonameid": 49518,
     "name": "Rwanda",
@@ -3594,7 +3704,44 @@
     "languages": "en-SC,fr-SC",
     "neighbours": ""
   },
-  
+  "SD": {
+    "geonameid": 366755,
+    "name": "Sudan",
+    "iso": "SD",
+    "iso3": "SDN",
+    "isonumeric": 729,
+    "fips": "SU",
+    "continentcode": "AF",
+    "capital": "Khartoum",
+    "areakm2": 1861484,
+    "population": 41801533,
+    "tld": ".sd",
+    "currencycode": "SDG",
+    "currencyname": "Pound",
+    "phone": "249",
+    "postalcoderegex": "^(\\d{5})$",
+    "languages": "ar-SD,en,fia",
+    "neighbours": "SS,TD,EG,ET,ER,LY,CF"
+  },
+  "SS": {
+    "geonameid": 7909807,
+    "name": "South Sudan",
+    "iso": "SS",
+    "iso3": "SSD",
+    "isonumeric": 728,
+    "fips": "OD",
+    "continentcode": "AF",
+    "capital": "Juba",
+    "areakm2": 644329,
+    "population": 8260490,
+    "tld": ".ss",
+    "currencycode": "SSP",
+    "currencyname": "Pound",
+    "phone": "211",
+    "postalcoderegex": "",
+    "languages": "en",
+    "neighbours": "CD,CF,ET,KE,SD,UG"
+  },
   "SE": {
     "geonameid": 2661886,
     "name": "Sweden",
@@ -3975,7 +4122,25 @@
     "languages": "fr-TG,ee,hna,kbp,dag,ha",
     "neighbours": "BJ,GH,BF"
   },
-  
+  "TH": {
+    "geonameid": 1605651,
+    "name": "Thailand",
+    "iso": "TH",
+    "iso3": "THA",
+    "isonumeric": 764,
+    "fips": "TH",
+    "continentcode": "AS",
+    "capital": "Bangkok",
+    "areakm2": 514000,
+    "population": 69428524,
+    "tld": ".th",
+    "currencycode": "THB",
+    "currencyname": "Baht",
+    "phone": "66",
+    "postalcoderegex": "^(\\d{5})$",
+    "languages": "th,en",
+    "neighbours": "LA,MM,KH,MY"
+  },
   "TJ": {
     "geonameid": 1220409,
     "name": "Tajikistan",
@@ -4185,6 +4350,25 @@
     "languages": "sw-TZ,en,ar",
     "neighbours": "MZ,KE,CD,RW,ZM,BI,UG,MW"
   },
+  "UA": {
+    "geonameid": 690791,
+    "name": "Ukraine",
+    "iso": "UA",
+    "iso3": "UKR",
+    "isonumeric": 804,
+    "fips": "UP",
+    "continentcode": "EU",
+    "capital": "Kyiv",
+    "areakm2": 603700,
+    "population": 44622516,
+    "tld": ".ua",
+    "currencycode": "UAH",
+    "currencyname": "Hryvnia",
+    "phone": "380",
+    "postalcoderegex": "^(\\d{5})$",
+    "languages": "uk,ru-UA,rom,pl,hu",
+    "neighbours": "PL,MD,HU,SK,BY,RO,RU"
+  },
   "UG": {
     "geonameid": 226074,
     "name": "Uganda",
@@ -4222,25 +4406,6 @@
     "postalcoderegex": "",
     "languages": "en-UM",
     "neighbours": ""
-  },
-  "US": {
-    "geonameid": 6252001,
-    "name": "United States",
-    "iso": "US",
-    "iso3": "USA",
-    "isonumeric": 840,
-    "fips": "US",
-    "continentcode": "NA",
-    "capital": "Washington",
-    "areakm2": 9629091,
-    "population": 327167434,
-    "tld": ".us",
-    "currencycode": "USD",
-    "currencyname": "Dollar",
-    "phone": "1",
-    "postalcoderegex": "^\\d{5}(-\\d{4})?$",
-    "languages": "en-US,es-US,haw,fr",
-    "neighbours": "CA,MX,CU"
   },
   "UY": {
     "geonameid": 3439705,
@@ -4488,6 +4653,25 @@
     "postalcoderegex": "^(\\d{5})$",
     "languages": "fr-YT",
     "neighbours": ""
+  },
+  "ZA": {
+    "geonameid": 953987,
+    "name": "South Africa",
+    "iso": "ZA",
+    "iso3": "ZAF",
+    "isonumeric": 710,
+    "fips": "SF",
+    "continentcode": "AF",
+    "capital": "Pretoria",
+    "areakm2": 1219912,
+    "population": 57779622,
+    "tld": ".za",
+    "currencycode": "ZAR",
+    "currencyname": "Rand",
+    "phone": "27",
+    "postalcoderegex": "^(\\d{4})$",
+    "languages": "zu,xh,af,nso,en-ZA,tn,st,ts,ss,ve,nr",
+    "neighbours": "ZW,SZ,MZ,BW,NA,LS"
   },
   "ZM": {
     "geonameid": 895949,

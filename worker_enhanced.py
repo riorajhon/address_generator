@@ -41,22 +41,23 @@ MAX_BBOX_AREA = 100  # m^2
 # Global flag for graceful shutdown
 shutdown_requested = False
 
-# Global list to track missing countries
-missing_countries = []
+# Note: Missing countries are now tracked in MongoDB status collection
 
 class AddressExtractor(osmium.SimpleHandler):
     """Extract buildings with full addresses from OSM PBF"""
     
-    def __init__(self, worker, country_name: str, country_code: str, max_bbox=100):
+    def __init__(self, worker, country_name: str, country_code: str, max_bbox=100, max_addresses=300000):
         osmium.SimpleHandler.__init__(self)
         self.worker = worker
         self.country_name = country_name
         self.country_code = country_code
         self.max_bbox = max_bbox
+        self.max_addresses = max_addresses  # Limit per country
         self.processed = 0
         self.found = 0
         self.addresses_batch = []
         self.total_saved = 0
+        self.limit_reached = False  # Flag to stop processing
         
         # Country code to full name mapping
         self.country_names = {
@@ -219,7 +220,7 @@ class AddressExtractor(osmium.SimpleHandler):
         if self.processed % 10000 == 0:
             print(f"[Worker {self.worker.worker_id}] Processed {self.processed} nodes, found {self.found} addresses")
         
-        if shutdown_requested:
+        if shutdown_requested or self.limit_reached:
             return
         
         # Must be a building
@@ -275,6 +276,11 @@ class AddressExtractor(osmium.SimpleHandler):
             self.total_saved += len(self.addresses_batch)
             self.addresses_batch.clear()
             print(f"[Worker {self.worker.worker_id}] Saved batch, total: {self.total_saved} addresses for {self.country_code}")
+            
+            # Check if we've reached the limit
+            if self.total_saved >= self.max_addresses:
+                print(f"[Worker {self.worker.worker_id}] Reached limit of {self.max_addresses} addresses for {self.country_code}")
+                self.limit_reached = True
     
     def way(self, w):
         """Process each way (building)"""
@@ -286,7 +292,7 @@ class AddressExtractor(osmium.SimpleHandler):
         if self.processed % 1000 == 0:
             print(f"[Worker {self.worker.worker_id}] Processed {self.processed} ways, found {self.found} addresses")
         
-        if shutdown_requested:
+        if shutdown_requested or self.limit_reached:
             return
         
         # Must be a building
@@ -350,6 +356,11 @@ class AddressExtractor(osmium.SimpleHandler):
             self.total_saved += len(self.addresses_batch)
             self.addresses_batch.clear()
             print(f"[Worker {self.worker.worker_id}] Saved batch, total: {self.total_saved} addresses for {self.country_code}")
+            
+            # Check if we've reached the limit
+            if self.total_saved >= self.max_addresses:
+                print(f"[Worker {self.worker.worker_id}] Reached limit of {self.max_addresses} addresses for {self.country_code}")
+                self.limit_reached = True
 
 class EnhancedAddressWorker:
     def __init__(self, worker_id: int):
@@ -387,6 +398,7 @@ class EnhancedAddressWorker:
                     {
                         "$setOnInsert": {
                             "country_code": country_code,
+                            ###insert country name
                             "worker_id": self.worker_id,
                             "status": "processing",
                             "started_at": datetime.utcnow()
@@ -478,9 +490,7 @@ class EnhancedAddressWorker:
             gc.collect()  # Force garbage collection to release file handles
     
     def download_pbf(self, country_code: str, country_name: str) -> Optional[Path]:
-        """Download OSM PBF file for country using geofabrik_urls.py"""
-        global missing_countries
-        
+        """Download OSM PBF file for country using ONLY geofabrik_urls.py"""
         pbf_file = WORK_DIR / f"{country_code.lower()}-latest.osm.pbf"
         
         # Check if existing file is valid
@@ -492,63 +502,35 @@ class EnhancedAddressWorker:
                 print(f"[Worker {self.worker_id}] Existing PBF file is corrupted, re-downloading...")
                 self.safe_remove_file(pbf_file)
         
-        # Check if URL exists in geofabrik_urls.py
+        # Check if URL exists in geofabrik_urls.py - ONLY source of truth
         if country_code.upper() not in GEOFABRIK_URLS:
             print(f"[Worker {self.worker_id}] No Geofabrik URL found for {country_code} ({country_name})")
-            # Check if already in missing countries to avoid duplicates
-            if not any(c['country_code'] == country_code for c in missing_countries):
-                missing_countries.append({
-                    "country_code": country_code,
-                    "country_name": country_name,
-                    "reason": "no_geofabrik_url"
-                })
-            return None
+            return None  # Return None to trigger skipped status
         
-        # Get the correct Geofabrik URL
-        primary_url = get_geofabrik_url(country_code, country_name)
+        # Get the ONLY URL from geofabrik_urls.py
+        geofabrik_url = get_geofabrik_url(country_code, country_name)
         
-        # Try primary URL first, then fallbacks
-        urls = [primary_url]
+        try:
+            print(f"[Worker {self.worker_id}] Downloading from Geofabrik: {geofabrik_url}")
+            urllib.request.urlretrieve(geofabrik_url, pbf_file)
+            
+            # Validate PBF file size and format
+            if pbf_file.exists() and pbf_file.stat().st_size > 1000:  # At least 1KB
+                # Validate PBF file with osmium
+                if self.validate_pbf_file(pbf_file):
+                    print(f"[Worker {self.worker_id}] Downloaded: {pbf_file} ({pbf_file.stat().st_size} bytes)")
+                    return pbf_file
+            
+            # If validation fails, delete file
+            print(f"[Worker {self.worker_id}] Downloaded file appears corrupted")
+            self.safe_remove_file(pbf_file)
+            
+        except Exception as e:
+            print(f"[Worker {self.worker_id}] Failed to download from {geofabrik_url}: {e}")
+            self.safe_remove_file(pbf_file)
         
-        # Add fallback URLs in case primary fails
-        country_slug = country_name.lower().replace(' ', '-').replace('&', 'and')
-        urls.extend([
-            f"https://download.geofabrik.de/{country_slug}-latest.osm.pbf",
-            f"https://download.geofabrik.de/{country_code.upper()}-latest.osm.pbf",
-            f"https://download.geofabrik.de/{country_code.lower()}-latest.osm.pbf"
-        ])
-        
-        for url in urls:
-            try:
-                print(f"[Worker {self.worker_id}] Downloading {url}...")
-                urllib.request.urlretrieve(url, pbf_file)
-                
-                # Validate PBF file size and format
-                if pbf_file.exists() and pbf_file.stat().st_size > 1000:  # At least 1KB
-                    # Validate PBF file with osmium
-                    if self.validate_pbf_file(pbf_file):
-                        print(f"[Worker {self.worker_id}] Downloaded: {pbf_file} ({pbf_file.stat().st_size} bytes)")
-                        return pbf_file
-                
-                # If validation fails, delete and try next URL
-                print(f"[Worker {self.worker_id}] Downloaded file appears corrupted, trying next URL...")
-                self.safe_remove_file(pbf_file)
-                
-            except Exception as e:
-                print(f"[Worker {self.worker_id}] Failed to download from {url}: {e}")
-                self.safe_remove_file(pbf_file)
-                continue
-        
-        # If all downloads failed, add to missing countries
-        print(f"[Worker {self.worker_id}] All download attempts failed for {country_code} ({country_name})")
-        # Check if already in missing countries to avoid duplicates
-        if not any(c['country_code'] == country_code for c in missing_countries):
-            missing_countries.append({
-                "country_code": country_code,
-                "country_name": country_name,
-                "reason": "download_failed",
-                "attempted_urls": urls
-            })
+        # If download failed
+        print(f"[Worker {self.worker_id}] Download failed for {country_code} ({country_name})")
         return None
     
     def save_addresses_batch(self, country_code: str, country_name: str, addresses: List[Dict]):
@@ -662,8 +644,13 @@ class EnhancedAddressWorker:
             
             pbf_file = self.download_pbf(country_code, country_name)
             if not pbf_file:
-                print(f"[Worker {self.worker_id}] Skipping {country_code} - no download available")
-                self.mark_skipped(country_code, "no_download_available")
+                # Check if it's because no Geofabrik URL exists
+                if country_code.upper() not in GEOFABRIK_URLS:
+                    print(f"[Worker {self.worker_id}] Skipping {country_code} - no Geofabrik URL available")
+                    self.mark_skipped(country_code, "no_geofabrik_url")
+                else:
+                    print(f"[Worker {self.worker_id}] Skipping {country_code} - download failed")
+                    self.mark_skipped(country_code, "download_failed")
                 self.current_country = None
                 return
             
@@ -689,12 +676,21 @@ class EnhancedAddressWorker:
                 
                 handler.apply_file(str(pbf_file), locations=True)
                 
-                # Save remaining addresses in final batch
-                if handler.addresses_batch:
-                    self.save_addresses_batch(country_code, country_name, handler.addresses_batch)
-                    handler.total_saved += len(handler.addresses_batch)
+                # Save remaining addresses in final batch (if not at limit)
+                if handler.addresses_batch and not handler.limit_reached:
+                    # Check if final batch would exceed limit
+                    remaining_capacity = handler.max_addresses - handler.total_saved
+                    if remaining_capacity > 0:
+                        # Only save up to the limit
+                        addresses_to_save = handler.addresses_batch[:remaining_capacity]
+                        if addresses_to_save:
+                            self.save_addresses_batch(country_code, country_name, addresses_to_save)
+                            handler.total_saved += len(addresses_to_save)
                 
-                print(f"[Worker {self.worker_id}] Saved {handler.total_saved} addresses for {country_code}")
+                if handler.limit_reached:
+                    print(f"[Worker {self.worker_id}] Completed {country_code} with limit reached: {handler.total_saved} addresses")
+                else:
+                    print(f"[Worker {self.worker_id}] Completed {country_code}: {handler.total_saved} addresses")
                 
             except Exception as e:
                 error_msg = str(e)
@@ -746,29 +742,46 @@ class EnhancedAddressWorker:
             self.process_country(country_code, country_data)
 
 def save_missing_countries():
-    """Save missing countries to JSON file"""
-    global missing_countries
-    
-    if missing_countries:
-        print(f"\n=== MISSING COUNTRIES SUMMARY ===")
-        print(f"Found {len(missing_countries)} countries that need manual download:")
+    """Generate missing countries report from MongoDB status collection"""
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client[DB_NAME]
+        country_status_col = db.country_status
         
-        for country in missing_countries:
-            print(f"  {country['country_code']} - {country['country_name']} ({country['reason']})")
+        # Find all skipped countries
+        skipped_countries = list(country_status_col.find({"status": "skipped"}))
         
-        # Save to JSON file
-        with open(MISSING_COUNTRIES_FILE, 'w', encoding='utf-8') as f:
-            json.dump({
-                "missing_countries": missing_countries,
-                "total_count": len(missing_countries),
-                "generated_at": datetime.utcnow().isoformat()
-            }, f, indent=2, ensure_ascii=False)
+        if skipped_countries:
+            print(f"\n=== MISSING COUNTRIES SUMMARY ===")
+            print(f"Found {len(skipped_countries)} countries that were skipped:")
+            
+            missing_data = []
+            for country in skipped_countries:
+                reason = country.get('reason', 'unknown')
+                print(f"  {country['country_code']} - {reason}")
+                missing_data.append({
+                    "country_code": country['country_code'],
+                    "reason": reason,
+                    "skipped_at": country.get('skipped_at', '').isoformat() if country.get('skipped_at') else ''
+                })
+            
+            # Save to JSON file
+            with open(MISSING_COUNTRIES_FILE, 'w', encoding='utf-8') as f:
+                json.dump({
+                    "skipped_countries": missing_data,
+                    "total_count": len(missing_data),
+                    "generated_at": datetime.utcnow().isoformat()
+                }, f, indent=2, ensure_ascii=False)
+            
+            print(f"\nSkipped countries saved to: {MISSING_COUNTRIES_FILE}")
+            print("Countries with 'no_geofabrik_url' need manual download")
+        else:
+            print("\n=== ALL COUNTRIES PROCESSED ===")
+            print("No skipped countries found!")
         
-        print(f"\nMissing countries saved to: {MISSING_COUNTRIES_FILE}")
-        print("You can manually download these countries and place them in osm_manual/ folder")
-    else:
-        print("\n=== ALL COUNTRIES PROCESSED ===")
-        print("No missing countries found!")
+        client.close()
+    except Exception as e:
+        print(f"Error generating missing countries report: {e}")
 
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully"""
@@ -796,7 +809,7 @@ def main():
         print(f"\n[Worker {worker_id}] Interrupted by user")
     finally:
         worker.cleanup()
-        save_missing_countries()  # Save missing countries on exit
+        save_missing_countries()  # Generate skipped countries report from MongoDB
         print(f"[Worker {worker_id}] Shutdown complete")
 
 if __name__ == "__main__":
