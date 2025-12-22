@@ -250,7 +250,7 @@ def process_addresses_batch(country_code: str, addresses: List[Dict]) -> Dict:
                                 stats['failed'] += 1
                         else:
                             delete_address(address_id)
-                            tats['deleted'] += 1
+                            stats['deleted'] += 1
                             print(f"[Worker {worker_id}] Deleted address: ------------")
                     else:
                         stats['failed'] += 1
