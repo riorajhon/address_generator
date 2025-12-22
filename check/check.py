@@ -242,11 +242,16 @@ def process_addresses_batch(country_code: str, addresses: List[Dict]) -> Dict:
                             stats['failed'] += 1
                     elif corrected_data.get('fulladdress'):
                         # Update address with corrected information
-                        if update_corrected_address(address_id, corrected_data):
-                            stats['corrected'] += 1
-                            print(f"[Worker {worker_id}] Corrected: {corrected_data['fulladdress']}")
+                        if validate_address_region(corrected_data.get('fulladdress'), country_name):
+                            if update_corrected_address(address_id, corrected_data):
+                                stats['corrected'] += 1
+                                print(f"[Worker {worker_id}] Corrected: {corrected_data['fulladdress']}")
+                            else:
+                                stats['failed'] += 1
                         else:
-                            stats['failed'] += 1
+                            delete_address(address_id)
+                            tats['deleted'] += 1
+                            print(f"[Worker {worker_id}] Deleted address: ------------")
                     else:
                         stats['failed'] += 1
                 else:
@@ -394,7 +399,7 @@ def run_validation():
     while not shutdown_requested:
         # Claim next available country
         country_code = claim_country()
-        # country_code = "UA"
+        # country_code = "RU"
         if not country_code:
             print(f"[Worker {worker_id}] No available countries found Finishing work.")
             break
