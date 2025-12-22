@@ -13,6 +13,7 @@ from typing import Optional, Dict, List
 from pymongo import MongoClient, ASCENDING
 from datetime import datetime
 import signal
+import math
 try:
     from .test import validate_address_region
 except ImportError:
@@ -117,18 +118,15 @@ def query_nominatim(address: str) -> Optional[Dict]:
         if bbox and len(bbox) >= 4:
             try:
                 # bbox format: [min_lat, max_lat, min_lon, max_lon]
-                min_lat, max_lat, min_lon, max_lon = map(float, bbox)
+                south, north, west, east = map(float, bbox)
                 
                 # Calculate bbox area in square meters
-                lat_diff = max_lat - min_lat
-                lon_diff = max_lon - min_lon
-                
-                # Convert to meters
-                lat_meters = lat_diff * 111000  # 1 degree lat ≈ 111km
-                lon_meters = lon_diff * 111000 * 0.7  # Adjust for longitude
-                
-                # Calculate area in square meters
-                bbox_area_m2 = lat_meters * lon_meters
+                center_lat = (south + north) / 2.0
+                lat_m = 111_000  # meters per degree latitude
+                lon_m = 111_000 * math.cos(math.radians(center_lat))  # meters per degree longitude
+                height_m = abs(north - south) * lat_m
+                width_m = abs(east - west) * lon_m
+                bbox_area_m2 = width_m * height_m
                 
                 # Filter out if bbox > 100 square meters
                 if bbox_area_m2 > 100:
