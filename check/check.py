@@ -173,9 +173,9 @@ def update_corrected_address(address_id, corrected_data: Dict) -> bool:
     try:
         update_fields = {
             "fulladdress": corrected_data.get('fulladdress', ''),
-            "country": corrected_data.get('country', ''),
+            "country_name": corrected_data.get('country', ''),
             "city": corrected_data.get('city', ''),
-            "street": corrected_data.get('street', ''),
+            "street_name": corrected_data.get('street', ''),
             "worker_id": worker_id
         }
         
