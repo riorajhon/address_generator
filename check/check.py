@@ -20,7 +20,7 @@ except ImportError:
     from test import validate_address_region
 
 # Configuration
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:wkrjk!20020415@localhost:27017/?authSource=admin")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:fjkfjrj!20020415@localhost:27017/?authSource=admin")
 DB_NAME = "address_db"
 BATCH_SIZE = 1000  # Process addresses in batches for memory safety
 NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/search"
