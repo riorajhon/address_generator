@@ -129,7 +129,7 @@ def query_nominatim(address: str) -> Optional[Dict]:
                 bbox_area_m2 = width_m * height_m
                 
                 # Filter out if bbox > 100 square meters
-                if bbox_area_m2 > 100:
+                if bbox_area_m2 > 1000:
                     print(f"[Worker {worker_id}] Large bbox area: {bbox_area_m2:.1f}m² for '{address}' - marking for deletion")
                     return {"delete": True}
                     
